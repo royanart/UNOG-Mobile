@@ -7,9 +7,9 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
@@ -36,7 +36,11 @@ public class MainActivity extends AppCompatActivity {
     private WebView myWebView;
     private ProgressBar progressBar;
 
-    // Fitur Auto-Lock: Melindungi aplikasi saat ditinggalkan ke background
+    // Sesi Aktif
+    private String activeUser = "";
+    private String activeSession = "";
+
+    // Fitur Auto-Lock
     private boolean isAuthenticated = false;
 
     // Timer untuk Screen Always On (1 Menit)
@@ -65,10 +69,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Mengambil ID unik perangkat Android secara konsisten untuk Gatekeeper.
+     * Jembatan komunikasi antara WebApp dan Android Native
      */
-    private String getAndroidDeviceId() {
-        return Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+    public class WebAppInterface {
+        @JavascriptInterface
+        public void saveLoginData(String user, String session) {
+            activeUser = user;
+            activeSession = session;
+        }
     }
 
     @Override
@@ -127,11 +135,25 @@ public class MainActivity extends AppCompatActivity {
         myWebView = findViewById(R.id.webview_unog);
         progressBar = findViewById(R.id.progress_bar);
 
-        // Tombol CBT dan OSCE dihapus dari inisialisasi native sesuai request Dokter
+        Button btnCbt = findViewById(R.id.btn_cbt);
+        Button btnOsce = findViewById(R.id.btn_osce);
         Button btnRefresh = findViewById(R.id.btn_refresh);
         TextView tvAppTitle = findViewById(R.id.tv_app_title);
 
-        // Hanya tombol Refresh yang dipertahankan
+        btnCbt.setOnClickListener(v -> {
+            myWebView.loadUrl(BASE_URL + "?page=cbt");
+        });
+
+        btnOsce.setOnClickListener(v -> {
+            if (activeSession != null && !activeSession.isEmpty()) {
+                String url = BASE_URL + "?page=osce&username=" + activeUser + "&sessionId=" + activeSession;
+                myWebView.loadUrl(url);
+            } else {
+                Toast.makeText(this, "Silakan Login CBT Terlebih Dahulu!", Toast.LENGTH_LONG).show();
+                myWebView.loadUrl(BASE_URL + "?page=cbt");
+            }
+        });
+
         btnRefresh.setOnClickListener(v -> {
             myWebView.reload();
             Toast.makeText(this, "Memperbarui halaman... 🔄", Toast.LENGTH_SHORT).show();
@@ -149,7 +171,9 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportMultipleWindows(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
-        // User Agent ditingkatkan ke versi Mobile yang lebih stabil
+        // Menambahkan Jembatan Interface
+        myWebView.addJavascriptInterface(new WebAppInterface(), "AndroidBridge");
+
         settings.setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36");
 
         settings.setBuiltInZoomControls(true);
@@ -168,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
         myWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                // 1. Blokir Banner Abuse / Developers App Script agar user tidak "kabur"
+                // 1. Blokir Banner Abuse
                 if (url.contains("drive.google.com/abuse") ||
                         url.contains("developers.google.com/apps-script") ||
                         url.contains("report-abuse")) {
@@ -176,8 +200,7 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
 
-                // 2. Penanganan Materi (OneDrive, Sharepoint, Google Docs/Drive)
-                // Melempar ke browser luar agar tidak terjadi mismatch sesi internal WebView
+                // 2. Penanganan Materi Luar (OneDrive, Sharepoint, Google Docs)
                 if (url.contains("onedrive.live.com") ||
                         url.contains("sharepoint.com") ||
                         url.contains("docs.google.com") ||
@@ -194,17 +217,6 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 return false;
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                progressBar.setVisibility(View.GONE);
-
-                // 🔥 SINKRONISASI KRUSIAL: Injeksi Device ID Android ke LocalStorage Web
-                // Ini obat agar link OSCE tidak lari ke Start Screen
-                String devId = getAndroidDeviceId();
-                myWebView.evaluateJavascript("localStorage.setItem('ppds_device_id', '" + devId + "');", null);
             }
 
             @Override
@@ -278,15 +290,17 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadInitialUrl() {
         if (myWebView.getUrl() == null) {
-            // Sejak load pertama, kirimkan devId ke server
-            myWebView.loadUrl(BASE_URL + "?page=cbt&devId=" + getAndroidDeviceId());
+            myWebView.loadUrl(BASE_URL + "?page=cbt");
         }
     }
 
     private void showAboutDialog() {
         new AlertDialog.Builder(this)
-                .setTitle("About UNOG Mobile v4.0")
-                .setMessage("Specialist CBT Simulation System\nDeveloped by RX\n© 2026 - UNOG System")
+                .setTitle("About UNOG Mobile v5")
+                .setMessage("Specialist CBT & OSCE Simulation System\n" +
+                        "Faculty of Medicine - Diponegoro University\n" +
+                        "Developed by RX\n" +
+                        "© 2026 - UNOG System")
                 .setPositiveButton("OK", null)
                 .show();
     }

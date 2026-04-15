@@ -19,7 +19,7 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="50dp"
-        android:text="UNOG Mobile v4.0"
+        android:text="UNOG Mobile v5"
         android:textColor="#555555"
         android:textStyle="bold"
         tools:ignore="HardcodedText" />
