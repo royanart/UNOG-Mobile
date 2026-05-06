@@ -4,14 +4,14 @@ plugins {
 
 android {
     namespace = "com.rx.unog"
-
-    // Gunakan format standar agar tidak error
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.rx.unog"
         minSdk = 30
         targetSdk = 36
+
+        // Pastikan versionCode dinaikkan setiap kali update rilis ke Play Store
         versionCode = 2
         versionName = "2.0"
 
@@ -29,12 +29,9 @@ android {
     }
 
     compileOptions {
-        // Karena MainActivity.java & SplashActivity.java pakai Java 11
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-
-    // Bagian kotlinOptions SUDAH DIHAPUS agar tidak error lagi
 }
 
 dependencies {
@@ -51,6 +48,4 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-
-    // SwipeRefreshLayout sudah bersih sesuai permintaanmu
 }

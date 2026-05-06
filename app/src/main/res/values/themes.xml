@@ -1,8 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Base.Theme.UNOGMobile" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Warna utama aplikasi (Biru untuk tombol CBT) -->
+        <item name="colorPrimary">#007BFF</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+
+        <!-- Warna sekunder (Hijau untuk tombol OSCE) -->
+        <item name="colorSecondary">#28A745</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+
+        <!-- Pengaturan Status Bar agar menyatu dengan toolbar abu-abu di layout -->
+        <item name="android:statusBarColor">#EEEEEE</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 
     <style name="Theme.UNOGMobile" parent="Base.Theme.UNOGMobile" />

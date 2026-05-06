@@ -1,5 +1,6 @@
 package com.rx.unog;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.graphics.Color;
 import android.net.Uri;
@@ -9,8 +10,10 @@ import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
 import android.view.WindowManager;
+import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -162,6 +165,7 @@ public class MainActivity extends AppCompatActivity {
         tvAppTitle.setOnClickListener(v -> showAboutDialog());
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView() {
         WebSettings settings = myWebView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -170,6 +174,13 @@ public class MainActivity extends AppCompatActivity {
         settings.setAllowFileAccess(true);
         settings.setSupportMultipleWindows(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
+
+        // Wajib untuk Google Apps Script agar redirect dan sesi tidak terputus
+        CookieManager cookieManager = CookieManager.getInstance();
+        cookieManager.setAcceptCookie(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            cookieManager.setAcceptThirdPartyCookies(myWebView, true);
+        }
 
         // Menambahkan Jembatan Interface
         myWebView.addJavascriptInterface(new WebAppInterface(), "AndroidBridge");
@@ -190,14 +201,28 @@ public class MainActivity extends AppCompatActivity {
         });
 
         myWebView.setWebViewClient(new WebViewClient() {
+            // Support untuk API 24 ke atas
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    return handleUrlLoading(view, request.getUrl().toString());
+                }
+                return false;
+            }
+
+            // Support untuk API di bawah 24
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                return handleUrlLoading(view, url);
+            }
+
+            private boolean handleUrlLoading(WebView view, String url) {
                 // 1. Blokir Banner Abuse
                 if (url.contains("drive.google.com/abuse") ||
                         url.contains("developers.google.com/apps-script") ||
                         url.contains("report-abuse")) {
                     Toast.makeText(MainActivity.this, "Akses dibatasi.", Toast.LENGTH_SHORT).show();
-                    return true;
+                    return true; // true = mencegah WebView memuat URL ini
                 }
 
                 // 2. Penanganan Materi Luar (OneDrive, Sharepoint, Google Docs)
@@ -214,6 +239,11 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(MainActivity.this, "Tidak ada aplikasi untuk membuka file ini.", Toast.LENGTH_SHORT).show();
                         return false;
                     }
+                }
+
+                // 3. Pastikan Apps Script tetap di dalam WebView (Google Redirects)
+                if (url.contains("script.google.com") || url.contains("script.googleusercontent.com")) {
+                    return false; // false = biarkan WebView yang menangani URL
                 }
 
                 return false;
