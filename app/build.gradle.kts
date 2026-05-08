@@ -12,8 +12,8 @@ android {
         targetSdk = 36
 
         // Pastikan versionCode dinaikkan setiap kali update rilis ke Play Store
-        versionCode = 1
-        versionName = "5.0"
+        versionCode = 2
+        versionName = "5.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
