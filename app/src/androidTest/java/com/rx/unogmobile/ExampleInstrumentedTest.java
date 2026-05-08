@@ -1,4 +1,4 @@
-package com.rx.unog;
+package com.rx.unogmobile;
 
 import android.content.Context;
 

@@ -1,8 +1,7 @@
-package com.rx.unog;
+package com.rx.unogmobile;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -57,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 🛡️ Screenshot Protection
+        // 🛡️ Screenshot Protection (Dikomentari sementara untuk ambil SS)
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
 
         // 💡 Inisialisasi Screen Always On
@@ -65,10 +64,45 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        setupStatusBar();
+        // 📱 Menjalankan Immersive Fullscreen Mode
+        hideSystemUI();
+
         initViews();
         setupWebView();
         setupBackNavigation();
+    }
+
+    /**
+     * Menyembunyikan Status Bar dan Navigation Bar untuk Fullscreen Immersive Mode
+     */
+    private void hideSystemUI() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getWindow().setDecorFitsSystemWindows(false);
+            android.view.WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller != null) {
+                controller.hide(android.view.WindowInsets.Type.statusBars() | android.view.WindowInsets.Type.navigationBars());
+                controller.setSystemBarsBehavior(android.view.WindowInsetsController.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
+            }
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                            | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                            | View.SYSTEM_UI_FLAG_FULLSCREEN);
+        }
+    }
+
+    /**
+     * Memastikan aplikasi tetap fullscreen saat pengguna kembali berinteraksi dengan layar
+     */
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus) {
+            hideSystemUI();
+        }
     }
 
     /**
@@ -85,8 +119,9 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        //  Dikomentari sementara agar bisa mengambil SS tanpa terganggu prompt biometrik
         if (!isAuthenticated) {
-            checkBiometricAuth();
+           checkBiometricAuth();
         }
 
         if (myWebView != null) {
@@ -125,15 +160,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void setupStatusBar() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            getWindow().setStatusBarColor(Color.parseColor("#EEEEEE"));
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-            }
-        }
-    }
-
     private void initViews() {
         myWebView = findViewById(R.id.webview_unog);
         progressBar = findViewById(R.id.progress_bar);
@@ -159,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
         btnRefresh.setOnClickListener(v -> {
             myWebView.reload();
-            Toast.makeText(this, "Memperbarui halaman... 🔄", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Memperbarui halaman... \uD83D\uDD04", Toast.LENGTH_SHORT).show();
         });
 
         tvAppTitle.setOnClickListener(v -> showAboutDialog());
@@ -258,7 +284,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadErrorPage() {
         String errorHtml = "<html><body style='text-align:center;padding-top:100px;font-family:sans-serif;background:#f8f9fa;'>" +
-                "<h1 style='font-size:50px;'>🩺</h1>" +
+                "<h1 style='font-size:50px;'>\uD83E\uDE7A</h1>" +
                 "<h2>Koneksi Terputus</h2>" +
                 "<p style='color:#666;'>Gagal memuat instrumen UNOG.</p>" +
                 "<button onclick='location.reload()' style='padding:12px 25px;background:#007bff;color:white;border:none;border-radius:50px;font-weight:bold;'>COBA LAGI</button>" +

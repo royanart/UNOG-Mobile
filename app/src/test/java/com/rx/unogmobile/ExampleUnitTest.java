@@ -1,4 +1,4 @@
-package com.rx.unog;
+package com.rx.unogmobile;
 
 import org.junit.Test;
 

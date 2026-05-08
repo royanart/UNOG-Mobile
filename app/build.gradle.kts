@@ -3,17 +3,17 @@ plugins {
 }
 
 android {
-    namespace = "com.rx.unog"
+    namespace = "com.rx.unogmobile"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.rx.unog"
+        applicationId = "com.rx.unogmobile"
         minSdk = 30
         targetSdk = 36
 
         // Pastikan versionCode dinaikkan setiap kali update rilis ke Play Store
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 1
+        versionName = "5.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
