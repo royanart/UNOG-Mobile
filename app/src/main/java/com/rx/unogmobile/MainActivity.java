@@ -1,12 +1,15 @@
 package com.rx.unogmobile;
 
 import android.annotation.SuppressLint;
+import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.TextUtils;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.webkit.CookieManager;
@@ -16,8 +19,17 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -28,43 +40,49 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.biometric.BiometricManager;
 import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.navigation.NavigationView;
 
 import static androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG;
 import static androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.concurrent.Executor;
 
 public class MainActivity extends AppCompatActivity {
     private WebView myWebView;
     private ProgressBar progressBar;
 
-    // Sesi Aktif
+    private DrawerLayout drawerLayout;
+    private NavigationView navigationView;
+
     private String activeUser = "";
     private String activeSession = "";
 
-    // Fitur Auto-Lock
     private boolean isAuthenticated = false;
+    private long lastPauseTime = 0;
+    private final long BIOMETRIC_TIMEOUT_MS = 5 * 60 * 1000;
 
-    // Timer untuk Screen Always On (1 Menit)
     private final Handler screenHandler = new Handler(Looper.getMainLooper());
     private Runnable screenRunnable;
 
-    // URL Utama App Script
     private final String BASE_URL = "https://script.google.com/macros/s/AKfycbzG3Ch46IBO-ypHTJ3Md_tWqBibDgVPlPYrNulovwG7TQVQoobaOJyNDtocFCu_sTRQZg/exec";
+
+    // Variabel Global untuk Kalkulator USG
+    private Calendar selectedUsgDate = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // 🛡️ Screenshot Protection (Dikomentari sementara untuk ambil SS)
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
-
-        // 💡 Inisialisasi Screen Always On
         setupScreenAlwaysOn();
-
         setContentView(R.layout.activity_main);
-
-        // 📱 Menjalankan Immersive Fullscreen Mode
         hideSystemUI();
 
         initViews();
@@ -72,9 +90,6 @@ public class MainActivity extends AppCompatActivity {
         setupBackNavigation();
     }
 
-    /**
-     * Menyembunyikan Status Bar dan Navigation Bar untuk Fullscreen Immersive Mode
-     */
     private void hideSystemUI() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             getWindow().setDecorFitsSystemWindows(false);
@@ -94,9 +109,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Memastikan aplikasi tetap fullscreen saat pengguna kembali berinteraksi dengan layar
-     */
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
@@ -105,9 +117,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Jembatan komunikasi antara WebApp dan Android Native
-     */
     public class WebAppInterface {
         @JavascriptInterface
         public void saveLoginData(String user, String session) {
@@ -119,11 +128,15 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        //  Dikomentari sementara agar bisa mengambil SS tanpa terganggu prompt biometrik
-        if (!isAuthenticated) {
-           checkBiometricAuth();
+        if (lastPauseTime != 0) {
+            long timeAway = System.currentTimeMillis() - lastPauseTime;
+            if (timeAway > BIOMETRIC_TIMEOUT_MS) {
+                isAuthenticated = false;
+            }
         }
-
+        if (!isAuthenticated) {
+            checkBiometricAuth();
+        }
         if (myWebView != null) {
             myWebView.onResume();
             myWebView.resumeTimers();
@@ -133,8 +146,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        isAuthenticated = false;
-
+        lastPauseTime = System.currentTimeMillis();
         if (myWebView != null) {
             myWebView.onPause();
             myWebView.pauseTimers();
@@ -164,14 +176,28 @@ public class MainActivity extends AppCompatActivity {
         myWebView = findViewById(R.id.webview_unog);
         progressBar = findViewById(R.id.progress_bar);
 
+        drawerLayout = findViewById(R.id.drawer_layout);
+        navigationView = findViewById(R.id.nav_view);
+        ImageButton btnMenu = findViewById(R.id.btn_menu);
+
         Button btnCbt = findViewById(R.id.btn_cbt);
         Button btnOsce = findViewById(R.id.btn_osce);
         Button btnRefresh = findViewById(R.id.btn_refresh);
-        TextView tvAppTitle = findViewById(R.id.tv_app_title);
 
-        btnCbt.setOnClickListener(v -> {
-            myWebView.loadUrl(BASE_URL + "?page=cbt");
+        btnMenu.setOnClickListener(v -> drawerLayout.openDrawer(GravityCompat.START));
+
+        navigationView.setNavigationItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_calculator) {
+                showCalculatorSelectionMenu();
+            } else if (id == R.id.nav_about) {
+                showAboutDialog();
+            }
+            drawerLayout.closeDrawer(GravityCompat.START);
+            return true;
         });
+
+        btnCbt.setOnClickListener(v -> myWebView.loadUrl(BASE_URL + "?page=cbt"));
 
         btnOsce.setOnClickListener(v -> {
             if (activeSession != null && !activeSession.isEmpty()) {
@@ -187,8 +213,6 @@ public class MainActivity extends AppCompatActivity {
             myWebView.reload();
             Toast.makeText(this, "Memperbarui halaman... \uD83D\uDD04", Toast.LENGTH_SHORT).show();
         });
-
-        tvAppTitle.setOnClickListener(v -> showAboutDialog());
     }
 
     @SuppressLint("SetJavaScriptEnabled")
@@ -201,18 +225,14 @@ public class MainActivity extends AppCompatActivity {
         settings.setSupportMultipleWindows(false);
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
 
-        // Wajib untuk Google Apps Script agar redirect dan sesi tidak terputus
         CookieManager cookieManager = CookieManager.getInstance();
         cookieManager.setAcceptCookie(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             cookieManager.setAcceptThirdPartyCookies(myWebView, true);
         }
 
-        // Menambahkan Jembatan Interface
         myWebView.addJavascriptInterface(new WebAppInterface(), "AndroidBridge");
-
         settings.setUserAgentString("Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Mobile Safari/537.36");
-
         settings.setBuiltInZoomControls(true);
         settings.setDisplayZoomControls(false);
         settings.setSupportZoom(true);
@@ -227,7 +247,6 @@ public class MainActivity extends AppCompatActivity {
         });
 
         myWebView.setWebViewClient(new WebViewClient() {
-            // Support untuk API 24 ke atas
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
@@ -236,27 +255,22 @@ public class MainActivity extends AppCompatActivity {
                 return false;
             }
 
-            // Support untuk API di bawah 24
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
                 return handleUrlLoading(view, url);
             }
 
             private boolean handleUrlLoading(WebView view, String url) {
-                // 1. Blokir Banner Abuse
                 if (url.contains("drive.google.com/abuse") ||
                         url.contains("developers.google.com/apps-script") ||
                         url.contains("report-abuse")) {
                     Toast.makeText(MainActivity.this, "Akses dibatasi.", Toast.LENGTH_SHORT).show();
-                    return true; // true = mencegah WebView memuat URL ini
+                    return true;
                 }
-
-                // 2. Penanganan Materi Luar (OneDrive, Sharepoint, Google Docs)
                 if (url.contains("onedrive.live.com") ||
                         url.contains("sharepoint.com") ||
                         url.contains("docs.google.com") ||
                         url.contains("drive.google.com")) {
-
                     try {
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                         startActivity(intent);
@@ -266,12 +280,9 @@ public class MainActivity extends AppCompatActivity {
                         return false;
                     }
                 }
-
-                // 3. Pastikan Apps Script tetap di dalam WebView (Google Redirects)
                 if (url.contains("script.google.com") || url.contains("script.googleusercontent.com")) {
-                    return false; // false = biarkan WebView yang menangani URL
+                    return false;
                 }
-
                 return false;
             }
 
@@ -296,7 +307,9 @@ public class MainActivity extends AppCompatActivity {
         OnBackPressedCallback callback = new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                if (myWebView.canGoBack()) {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START);
+                } else if (myWebView.canGoBack()) {
                     myWebView.goBack();
                 } else {
                     showExitDialog();
@@ -348,6 +361,387 @@ public class MainActivity extends AppCompatActivity {
         if (myWebView.getUrl() == null) {
             myWebView.loadUrl(BASE_URL + "?page=cbt");
         }
+    }
+
+    // =========================================================
+    // MENU SELEKSI KALKULATOR
+    // =========================================================
+    private void showCalculatorSelectionMenu() {
+        String[] options = {
+                "1. Usia Gestasi & Taksiran Lahir (EDD)",
+                "2. Bishop Score",
+                "3. Taksiran Berat Janin (TBJ)",
+                "4. Mean Arterial Pressure (MAP)",
+                "5. VBAC (Flamm Score)",
+                "6. RMI (Kista Ovarium)"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("Pilih Kalkulator Medis")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) showBottomSheetCalculator("hpht_usg");
+                    else if (which == 1) showBottomSheetCalculator("bishop");
+                    else if (which == 2) showBottomSheetCalculator("tbj");
+                    else if (which == 3) showBottomSheetCalculator("map");
+                    else if (which == 4) showBottomSheetCalculator("vbac");
+                    else if (which == 5) showBottomSheetCalculator("rmi");
+                })
+                .show();
+    }
+
+    // =========================================================
+    // FITUR: KALKULATOR MEDIS OBGYN (BOTTOM SHEET)
+    // =========================================================
+    private void showBottomSheetCalculator(String moduleType) {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
+        View view = getLayoutInflater().inflate(R.layout.layout_bottom_sheet_calc, null);
+        bottomSheetDialog.setContentView(view);
+
+        TextView tvTitle = view.findViewById(R.id.tv_calc_title);
+        LinearLayout layoutHphtUsg = view.findViewById(R.id.layout_hpht_usg);
+        LinearLayout layoutBishop = view.findViewById(R.id.layout_bishop);
+        LinearLayout layoutTbj = view.findViewById(R.id.layout_tbj);
+        LinearLayout layoutMap = view.findViewById(R.id.layout_map);
+        LinearLayout layoutVbac = view.findViewById(R.id.layout_vbac);
+        LinearLayout layoutRmi = view.findViewById(R.id.layout_rmi);
+        Button btnClose = view.findViewById(R.id.btn_close_calc);
+
+        // Atur Tampilan Berdasarkan Pilihan
+        if (moduleType.equals("hpht_usg")) {
+            tvTitle.setText("Usia Gestasi & HPL");
+            layoutHphtUsg.setVisibility(View.VISIBLE);
+            setupHphtUsgModule(view);
+        } else if (moduleType.equals("bishop")) {
+            tvTitle.setText("Bishop Score");
+            layoutBishop.setVisibility(View.VISIBLE);
+            setupBishopModule(view);
+        } else if (moduleType.equals("tbj")) {
+            tvTitle.setText("Taksiran Berat Janin");
+            layoutTbj.setVisibility(View.VISIBLE);
+            setupTbjModule(view);
+        } else if (moduleType.equals("map")) {
+            tvTitle.setText("Mean Arterial Pressure");
+            layoutMap.setVisibility(View.VISIBLE);
+            setupMapModule(view);
+        } else if (moduleType.equals("vbac")) {
+            tvTitle.setText("VBAC (Flamm Score)");
+            layoutVbac.setVisibility(View.VISIBLE);
+            setupVbacModule(view);
+        } else if (moduleType.equals("rmi")) {
+            tvTitle.setText("RMI (Kista Ovarium)");
+            layoutRmi.setVisibility(View.VISIBLE);
+            setupRmiModule(view);
+        }
+
+        btnClose.setOnClickListener(v -> bottomSheetDialog.dismiss());
+        bottomSheetDialog.show();
+    }
+
+    // =========================================================
+    // 1. HPHT & USG
+    // =========================================================
+    private void setupHphtUsgModule(View view) {
+        RadioGroup rgMetode = view.findViewById(R.id.rg_metode_hitung);
+        RadioButton rbHpht = view.findViewById(R.id.rb_hpht);
+        Button btnPickDate = view.findViewById(R.id.btn_pick_date);
+        LinearLayout layoutInputUsg = view.findViewById(R.id.layout_input_usg);
+        EditText etUsgMinggu = view.findViewById(R.id.et_usg_minggu);
+        EditText etUsgHari = view.findViewById(R.id.et_usg_hari);
+        Button btnHitung = view.findViewById(R.id.btn_hitung_edd);
+        TextView tvHphtResult = view.findViewById(R.id.tv_hpht_result);
+
+        selectedUsgDate = null;
+
+        rgMetode.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.rb_hpht) {
+                btnPickDate.setText("PILIH TANGGAL HPHT");
+                layoutInputUsg.setVisibility(View.GONE);
+                btnHitung.setVisibility(View.GONE);
+                tvHphtResult.setText("Usia Kehamilan: -\nHPL (EDD): -");
+            } else {
+                btnPickDate.setText("PILIH TANGGAL USG DILAKUKAN");
+                layoutInputUsg.setVisibility(View.VISIBLE);
+                btnHitung.setVisibility(View.VISIBLE);
+                tvHphtResult.setText("Usia Kehamilan: -\nHPL (EDD): -");
+            }
+        });
+
+        btnPickDate.setOnClickListener(v -> {
+            Calendar calendar = Calendar.getInstance();
+            DatePickerDialog datePickerDialog = new DatePickerDialog(this, (datePicker, year, month, day) -> {
+                Calendar pickedDate = Calendar.getInstance();
+                pickedDate.set(year, month, day);
+                SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", new Locale("id", "ID"));
+
+                if (rbHpht.isChecked()) {
+                    btnPickDate.setText("HPHT: " + sdf.format(pickedDate.getTime()));
+                    Calendar edd = (Calendar) pickedDate.clone();
+                    edd.add(Calendar.DATE, 280);
+
+                    long diffInMillis = Calendar.getInstance().getTimeInMillis() - pickedDate.getTimeInMillis();
+                    long diffInDays = diffInMillis / (1000 * 60 * 60 * 24);
+                    long weeks = diffInDays / 7;
+                    long days = diffInDays % 7;
+
+                    if (diffInMillis < 0) {
+                        tvHphtResult.setText("Tanggal HPHT tidak boleh di masa depan!");
+                    } else {
+                        tvHphtResult.setText("Usia Kehamilan Hari Ini: " + weeks + " minggu " + days + " hari\n" +
+                                "HPL (EDD): " + sdf.format(edd.getTime()));
+                    }
+                } else {
+                    selectedUsgDate = pickedDate;
+                    btnPickDate.setText("Tgl USG: " + sdf.format(pickedDate.getTime()));
+                }
+            }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH));
+            datePickerDialog.show();
+        });
+
+        btnHitung.setOnClickListener(v -> {
+            if (selectedUsgDate == null) {
+                Toast.makeText(this, "Silakan pilih Tanggal USG dilakukan!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String strMinggu = TextUtils.isEmpty(etUsgMinggu.getText()) ? "0" : etUsgMinggu.getText().toString();
+            String strHari = TextUtils.isEmpty(etUsgHari.getText()) ? "0" : etUsgHari.getText().toString();
+
+            int usiaUsgMinggu = Integer.parseInt(strMinggu);
+            int usiaUsgHari = Integer.parseInt(strHari);
+
+            int totalHariUsg = (usiaUsgMinggu * 7) + usiaUsgHari;
+            int sisaHariLahir = 280 - totalHariUsg;
+
+            Calendar edd = (Calendar) selectedUsgDate.clone();
+            edd.add(Calendar.DATE, sisaHariLahir);
+
+            long selisihWaktu = Calendar.getInstance().getTimeInMillis() - selectedUsgDate.getTimeInMillis();
+            long selisihHari = selisihWaktu / (1000 * 60 * 60 * 24);
+
+            long totalUsiaHariIni = totalHariUsg + selisihHari;
+            long currentWeeks = totalUsiaHariIni / 7;
+            long currentDays = totalUsiaHariIni % 7;
+
+            SimpleDateFormat sdf = new SimpleDateFormat("dd MMM yyyy", new Locale("id", "ID"));
+
+            if(selisihWaktu < 0) {
+                tvHphtResult.setText("Tanggal USG tidak boleh di masa depan!");
+            } else {
+                tvHphtResult.setText("Usia Kehamilan Hari Ini: " + currentWeeks + " minggu " + currentDays + " hari\n" +
+                        "HPL (EDD): " + sdf.format(edd.getTime()));
+            }
+        });
+    }
+
+    // =========================================================
+    // 2. BISHOP SCORE
+    // =========================================================
+    private void setupBishopModule(View view) {
+        Spinner spinDilatasi = view.findViewById(R.id.spin_dilatasi);
+        Spinner spinPendataran = view.findViewById(R.id.spin_pendataran);
+        Spinner spinPenurunan = view.findViewById(R.id.spin_penurunan);
+        Spinner spinKonsistensi = view.findViewById(R.id.spin_konsistensi);
+        Spinner spinPosisi = view.findViewById(R.id.spin_posisi);
+        TextView tvBishopResult = view.findViewById(R.id.tv_bishop_result);
+
+        setupSpinner(spinDilatasi, new String[]{"Tertutup (0)", "1-2 cm (1)", "3-4 cm (2)", ">= 5 cm (3)"});
+        setupSpinner(spinPendataran, new String[]{"0-30% (0)", "40-50% (1)", "60-70% (2)", ">= 80% (3)"});
+        setupSpinner(spinPenurunan, new String[]{"-3 (0)", "-2 (1)", "-1 / 0 (2)", "+1 / +2 (3)"});
+        setupSpinner(spinKonsistensi, new String[]{"Kaku (0)", "Sedang (1)", "Lunak (2)"});
+        setupSpinner(spinPosisi, new String[]{"Posterior (0)", "Tengah / Searah Sumbu (1)", "Anterior (2)"});
+
+        AdapterView.OnItemSelectedListener listener = new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int score = spinDilatasi.getSelectedItemPosition() +
+                        spinPendataran.getSelectedItemPosition() +
+                        spinPenurunan.getSelectedItemPosition() +
+                        spinKonsistensi.getSelectedItemPosition() +
+                        spinPosisi.getSelectedItemPosition();
+
+                String interpretasi = score > 5 ? "Matang (Favorable) - Induksi dapat dilakukan" : "Belum Matang (Unfavorable)";
+                tvBishopResult.setText("Total Skor: " + score + "\nInterpretasi: " + interpretasi);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        };
+
+        spinDilatasi.setOnItemSelectedListener(listener);
+        spinPendataran.setOnItemSelectedListener(listener);
+        spinPenurunan.setOnItemSelectedListener(listener);
+        spinKonsistensi.setOnItemSelectedListener(listener);
+        spinPosisi.setOnItemSelectedListener(listener);
+    }
+
+    // =========================================================
+    // 3. TBJ (Johnson-Toshach)
+    // =========================================================
+    private void setupTbjModule(View view) {
+        EditText etTfu = view.findViewById(R.id.et_tfu);
+        Spinner spinPenurunan = view.findViewById(R.id.spin_penurunan_tbj);
+        Button btnHitung = view.findViewById(R.id.btn_hitung_tbj);
+        TextView tvResult = view.findViewById(R.id.tv_tbj_result);
+
+        setupSpinner(spinPenurunan, new String[]{
+                "Konvergen / Hodge I-II (Belum Masuk PAP)",
+                "Sejajar / Hodge III (Masuk Separuh)",
+                "Divergen / Hodge IV (Masuk Sepenuhnya)"
+        });
+
+        btnHitung.setOnClickListener(v -> {
+            if (TextUtils.isEmpty(etTfu.getText())) {
+                Toast.makeText(this, "Masukkan nilai TFU!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            double tfu = Double.parseDouble(etTfu.getText().toString());
+            int pos = spinPenurunan.getSelectedItemPosition();
+
+            // Logika Johnson-Toshach
+            int n = 12;
+            if (pos == 0) n = 13;
+            else if (pos == 1) n = 12;
+            else if (pos == 2) n = 11;
+
+            double tbj = (tfu - n) * 155;
+            if (tbj < 0) tbj = 0; // Menghindari hasil minus jika input TFU terlalu kecil
+
+            tvResult.setText(String.format(Locale.getDefault(), "Taksiran Berat Janin: %,.0f gram", tbj));
+        });
+    }
+
+    // =========================================================
+    // 4. MAP (Mean Arterial Pressure)
+    // =========================================================
+    private void setupMapModule(View view) {
+        EditText etSys = view.findViewById(R.id.et_sistolik);
+        EditText etDia = view.findViewById(R.id.et_diastolik);
+        Button btnHitung = view.findViewById(R.id.btn_hitung_map);
+        TextView tvResult = view.findViewById(R.id.tv_map_result);
+
+        btnHitung.setOnClickListener(v -> {
+            if (TextUtils.isEmpty(etSys.getText()) || TextUtils.isEmpty(etDia.getText())) {
+                Toast.makeText(this, "Masukkan Sistolik dan Diastolik!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            double sys = Double.parseDouble(etSys.getText().toString());
+            double dia = Double.parseDouble(etDia.getText().toString());
+
+            // Rumus MAP
+            double map = (sys + (2 * dia)) / 3.0;
+            String risiko = map >= 90 ? "Tinggi (Waspada Preeklampsia)" : "Normal";
+
+            tvResult.setText(String.format(Locale.getDefault(), "Nilai MAP: %.1f mmHg\nRisiko: %s", map, risiko));
+        });
+    }
+
+    // =========================================================
+    // 5. VBAC (Flamm Score)
+    // =========================================================
+    private void setupVbacModule(View view) {
+        Spinner spinUsia = view.findViewById(R.id.spin_vbac_usia);
+        Spinner spinRiwayat = view.findViewById(R.id.spin_vbac_riwayat);
+        Spinner spinAlasan = view.findViewById(R.id.spin_vbac_alasan_sc);
+        Spinner spinEff = view.findViewById(R.id.spin_vbac_effacement);
+        Spinner spinDil = view.findViewById(R.id.spin_vbac_dilatasi);
+        TextView tvResult = view.findViewById(R.id.tv_vbac_result);
+
+        setupSpinner(spinUsia, new String[]{"< 40 Tahun (2 poin)", ">= 40 Tahun (0 poin)"});
+        setupSpinner(spinRiwayat, new String[]{
+                "Belum pernah partus pervaginam (0 poin)",
+                "Partus pervaginam SEBELUM SC (1 poin)",
+                "Partus pervaginam SETELAH SC (2 poin)",
+                "Partus pervaginam SEBELUM & SETELAH SC (4 poin)"
+        });
+        setupSpinner(spinAlasan, new String[]{"Indikasi Berulang / CPD dsb (0 poin)", "Indikasi Tidak Berulang / Letak Sungsang dsb (1 poin)"});
+        setupSpinner(spinEff, new String[]{"< 25% (0 poin)", "25 - 75% (1 poin)", "> 75% (2 poin)"});
+        setupSpinner(spinDil, new String[]{"< 4 cm (0 poin)", ">= 4 cm (1 poin)"});
+
+        AdapterView.OnItemSelectedListener listener = new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                int score = 0;
+                score += spinUsia.getSelectedItemPosition() == 0 ? 2 : 0;
+
+                int rPos = spinRiwayat.getSelectedItemPosition();
+                if (rPos == 1) score += 1;
+                else if (rPos == 2) score += 2;
+                else if (rPos == 3) score += 4;
+
+                score += spinAlasan.getSelectedItemPosition() == 1 ? 1 : 0;
+                score += spinEff.getSelectedItemPosition(); // index match
+                score += spinDil.getSelectedItemPosition(); // index match
+
+                String peluang;
+                if (score <= 2) peluang = "49%";
+                else if (score == 3) peluang = "60%";
+                else if (score == 4) peluang = "67%";
+                else if (score == 5) peluang = "77%";
+                else if (score == 6) peluang = "89%";
+                else if (score == 7) peluang = "93%";
+                else peluang = "> 95%";
+
+                tvResult.setText("Flamm Score: " + score + "\nPeluang Keberhasilan VBAC: " + peluang);
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        };
+
+        spinUsia.setOnItemSelectedListener(listener);
+        spinRiwayat.setOnItemSelectedListener(listener);
+        spinAlasan.setOnItemSelectedListener(listener);
+        spinEff.setOnItemSelectedListener(listener);
+        spinDil.setOnItemSelectedListener(listener);
+    }
+
+    // =========================================================
+    // 6. RMI (Kista Ovarium)
+    // =========================================================
+    private void setupRmiModule(View view) {
+        Spinner spinMeno = view.findViewById(R.id.spin_rmi_menopause);
+        CheckBox cbMulti = view.findViewById(R.id.cb_rmi_multilocular);
+        CheckBox cbSolid = view.findViewById(R.id.cb_rmi_solid);
+        CheckBox cbBilateral = view.findViewById(R.id.cb_rmi_bilateral);
+        CheckBox cbAsites = view.findViewById(R.id.cb_rmi_asites);
+        CheckBox cbMetas = view.findViewById(R.id.cb_rmi_metastasis);
+        EditText etCa125 = view.findViewById(R.id.et_rmi_ca125);
+        Button btnHitung = view.findViewById(R.id.btn_hitung_rmi);
+        TextView tvResult = view.findViewById(R.id.tv_rmi_result);
+
+        setupSpinner(spinMeno, new String[]{"Premenopause (Skor 1)", "Postmenopause (Skor 3)"});
+
+        btnHitung.setOnClickListener(v -> {
+            if (TextUtils.isEmpty(etCa125.getText())) {
+                Toast.makeText(this, "Masukkan nilai CA-125!", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int m = spinMeno.getSelectedItemPosition() == 0 ? 1 : 3;
+
+            int uCount = 0;
+            if (cbMulti.isChecked()) uCount++;
+            if (cbSolid.isChecked()) uCount++;
+            if (cbBilateral.isChecked()) uCount++;
+            if (cbAsites.isChecked()) uCount++;
+            if (cbMetas.isChecked()) uCount++;
+
+            int u;
+            if (uCount == 0) u = 0;
+            else if (uCount == 1) u = 1;
+            else u = 3;
+
+            double ca125 = Double.parseDouble(etCa125.getText().toString());
+
+            // Rumus RMI = U x M x CA125
+            double rmi = u * m * ca125;
+            String risiko = rmi > 200 ? "Tinggi (> 200)" : "Rendah/Sedang";
+
+            tvResult.setText(String.format(Locale.getDefault(), "Nilai RMI: %.1f\nRisiko Keganasan: %s", rmi, risiko));
+        });
+    }
+
+    private void setupSpinner(Spinner spinner, String[] items) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
     }
 
     private void showAboutDialog() {

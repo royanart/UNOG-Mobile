@@ -1,0 +1,259 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#FFFFFF"
+    android:theme="@style/ThemeOverlay.AppCompat.Light"
+    android:paddingBottom="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <View
+            android:layout_width="40dp"
+            android:layout_height="4dp"
+            android:layout_gravity="center"
+            android:background="#CCCCCC"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tv_calc_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Kalkulator Medis"
+            android:textColor="#333333"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="20dp" />
+
+        <LinearLayout
+            android:id="@+id/layout_hpht_usg"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F8F9FA"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp">
+
+            <RadioGroup
+                android:id="@+id/rg_metode_hitung"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="12dp">
+
+                <RadioButton
+                    android:id="@+id/rb_hpht"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#333333"
+                    android:text="Dari HPHT"
+                    android:checked="true"/>
+
+                <RadioButton
+                    android:id="@+id/rb_usg"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:textColor="#333333"
+                    android:text="Dari USG"/>
+            </RadioGroup>
+
+            <Button
+                android:id="@+id/btn_pick_date"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="PILIH TANGGAL HPHT"
+                android:backgroundTint="#E0E0E0"
+                android:textColor="#333333"
+                android:layout_marginBottom="12dp"/>
+
+            <LinearLayout
+                android:id="@+id/layout_input_usg"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp">
+
+                <EditText
+                    android:id="@+id/et_usg_minggu"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:hint="Usia USG (Minggu)"
+                    android:textColor="#333333"
+                    android:textColorHint="#888888"
+                    android:inputType="number"
+                    android:layout_marginEnd="8dp"/>
+
+                <EditText
+                    android:id="@+id/et_usg_hari"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:hint="Usia USG (Hari)"
+                    android:textColor="#333333"
+                    android:textColorHint="#888888"
+                    android:inputType="number"/>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_hitung_edd"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="HITUNG"
+                android:backgroundTint="#007BFF"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="12dp"/>
+
+            <TextView
+                android:id="@+id/tv_hpht_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Usia Kehamilan: -\nHPL (EDD): -"
+                android:textColor="#333333"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:lineSpacingExtra="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_bishop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F8F9FA"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pembukaan (Dilatasi)" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_dilatasi" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pendataran (Effacement)" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_pendataran" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Penurunan Kepala (Station)" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_penurunan" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Konsistensi Serviks" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_konsistensi" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Posisi Serviks" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_posisi" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:id="@+id/tv_bishop_result"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Total Skor: 0\nInterpretasi: Belum Matang (Unfavorable)"
+                android:textColor="#333333"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:lineSpacingExtra="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_tbj"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F8F9FA"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp">
+
+            <EditText android:id="@+id/et_tfu" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Tinggi Fundus Uteri (TFU) dalam cm" android:textColor="#333333" android:textColorHint="#888888" android:inputType="numberDecimal" android:layout_marginBottom="8dp"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Penurunan Kepala" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_penurunan_tbj" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" />
+
+            <Button android:id="@+id/btn_hitung_tbj" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="HITUNG TBJ" android:backgroundTint="#007BFF" android:textColor="#FFFFFF" android:layout_marginBottom="12dp"/>
+            <TextView android:id="@+id/tv_tbj_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Taksiran Berat Janin: -" android:textColor="#333333" android:textSize="14sp" android:textStyle="bold"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_map"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F8F9FA"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp">
+
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:layout_marginBottom="12dp">
+                <EditText android:id="@+id/et_sistolik" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="Sistolik (mmHg)" android:textColor="#333333" android:textColorHint="#888888" android:inputType="number" android:layout_marginEnd="8dp"/>
+                <EditText android:id="@+id/et_diastolik" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:hint="Diastolik (mmHg)" android:textColor="#333333" android:textColorHint="#888888" android:inputType="number"/>
+            </LinearLayout>
+
+            <Button android:id="@+id/btn_hitung_map" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="HITUNG MAP" android:backgroundTint="#007BFF" android:textColor="#FFFFFF" android:layout_marginBottom="12dp"/>
+            <TextView android:id="@+id/tv_map_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Nilai MAP: -\nRisiko: -" android:textColor="#333333" android:textSize="14sp" android:textStyle="bold" android:lineSpacingExtra="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_vbac"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F8F9FA"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Usia Ibu" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_vbac_usia" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Riwayat Persalinan Pervaginam" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_vbac_riwayat" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alasan SC Sebelumnya" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_vbac_alasan_sc" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pendataran Serviks (Effacement) saat masuk" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_vbac_effacement" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Pembukaan Serviks saat masuk" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_vbac_dilatasi" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" />
+
+            <TextView android:id="@+id/tv_vbac_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Flamm Score: 0\nPeluang Keberhasilan VBAC: -" android:textColor="#333333" android:textSize="14sp" android:textStyle="bold" android:lineSpacingExtra="4dp"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/layout_rmi"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#F8F9FA"
+            android:orientation="vertical"
+            android:padding="12dp"
+            android:visibility="gone"
+            android:layout_marginBottom="12dp">
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Status Menopause (Skor M)" android:textColor="#333333" android:textSize="12sp" />
+            <Spinner android:id="@+id/spin_rmi_menopause" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="8dp" />
+
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Temuan USG (Skor U) - Pilih semua yang sesuai:" android:textColor="#333333" android:textSize="12sp" android:layout_marginTop="8dp"/>
+            <CheckBox android:id="@+id/cb_rmi_multilocular" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#333333" android:text="Kista Multilokular"/>
+            <CheckBox android:id="@+id/cb_rmi_solid" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#333333" android:text="Area Solid"/>
+            <CheckBox android:id="@+id/cb_rmi_bilateral" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#333333" android:text="Lesi Bilateral"/>
+            <CheckBox android:id="@+id/cb_rmi_asites" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#333333" android:text="Asites"/>
+            <CheckBox android:id="@+id/cb_rmi_metastasis" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#333333" android:text="Bukti Metastasis Intraabdomen" android:layout_marginBottom="8dp"/>
+
+            <EditText android:id="@+id/et_rmi_ca125" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Nilai CA-125 Serum (U/mL)" android:textColor="#333333" android:textColorHint="#888888" android:inputType="numberDecimal" android:layout_marginBottom="16dp"/>
+
+            <Button android:id="@+id/btn_hitung_rmi" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="HITUNG RMI" android:backgroundTint="#007BFF" android:textColor="#FFFFFF" android:layout_marginBottom="12dp"/>
+            <TextView android:id="@+id/tv_rmi_result" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Nilai RMI: -\nRisiko Keganasan: -" android:textColor="#333333" android:textSize="14sp" android:textStyle="bold" android:lineSpacingExtra="4dp"/>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btn_close_calc"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="TUTUP"
+            android:backgroundTint="#DC3545"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="10dp"/>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

@@ -1,109 +1,130 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<androidx.drawerlayout.widget.DrawerLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
-    android:orientation="vertical"
-    android:background="#FFFFFF">
+    tools:openDrawer="start">
 
-    <!-- Header / Custom Toolbar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#EEEEEE"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="10dp"
-        tools:ignore="DisableBaselineAlignment">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:background="#FFFFFF">
 
-        <ImageView
-            android:id="@+id/img_logo"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginEnd="10dp"
-            android:src="@drawable/logo_unog"
-            android:contentDescription="Logo UNOG"
-            tools:ignore="HardcodedText" />
-
-        <TextView
-            android:id="@+id/tv_app_title"
-            android:layout_width="0dp"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="UNOG Mobile v5"
-            android:textColor="#333333"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            tools:ignore="HardcodedText" />
+            android:background="#EEEEEE"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="10dp"
+            tools:ignore="DisableBaselineAlignment">
 
-        <!-- Tombol CBT: Biru Solid -->
-        <Button
-            android:id="@+id/btn_cbt"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:paddingHorizontal="16dp"
-            android:layout_marginEnd="6dp"
-            android:backgroundTint="#007BFF"
-            android:text="CBT"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:cornerRadius="8dp"
-            tools:ignore="HardcodedText" />
+            <ImageButton
+                android:id="@+id/btn_menu"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginEnd="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@android:drawable/ic_menu_sort_by_size"
+                android:contentDescription="Buka Menu"
+                app:tint="#333333" />
 
-        <!-- Tombol OSCE: Hijau Solid -->
-        <Button
-            android:id="@+id/btn_osce"
-            android:layout_width="wrap_content"
-            android:layout_height="40dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:paddingHorizontal="16dp"
-            android:layout_marginEnd="6dp"
-            android:backgroundTint="#28A745"
-            android:text="OSCE"
-            android:textColor="#FFFFFF"
-            android:textAllCaps="false"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            app:cornerRadius="8dp"
-            tools:ignore="HardcodedText" />
+            <ImageView
+                android:id="@+id/img_logo"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:layout_marginEnd="10dp"
+                android:src="@drawable/logo_unog"
+                android:contentDescription="Logo UNOG"
+                tools:ignore="HardcodedText" />
 
-        <!-- Tombol Refresh: Abu-abu -->
-        <Button
-            android:id="@+id/btn_refresh"
-            android:layout_width="44dp"
-            android:layout_height="40dp"
-            android:minWidth="0dp"
-            android:minHeight="0dp"
-            android:padding="0dp"
-            android:backgroundTint="#6C757D"
-            android:text="🔄"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            app:cornerRadius="8dp"
-            tools:ignore="HardcodedText" />
+            <TextView
+                android:id="@+id/tv_app_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="UNOG Mobile v5"
+                android:textColor="#333333"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/btn_cbt"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingHorizontal="16dp"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="#007BFF"
+                android:text="CBT"
+                android:textColor="#FFFFFF"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="8dp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/btn_osce"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:paddingHorizontal="16dp"
+                android:layout_marginEnd="6dp"
+                android:backgroundTint="#28A745"
+                android:text="OSCE"
+                android:textColor="#FFFFFF"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:cornerRadius="8dp"
+                tools:ignore="HardcodedText" />
+
+            <Button
+                android:id="@+id/btn_refresh"
+                android:layout_width="44dp"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:minHeight="0dp"
+                android:padding="0dp"
+                android:backgroundTint="#6C757D"
+                android:text="🔄"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                app:cornerRadius="8dp"
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="4dp"
+            android:indeterminate="false"
+            android:visibility="gone" />
+
+        <WebView
+            android:id="@+id/webview_unog"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
     </LinearLayout>
 
-    <!-- Progress Bar (Loading Indicator) -->
-    <ProgressBar
-        android:id="@+id/progress_bar"
-        style="?android:attr/progressBarStyleHorizontal"
-        android:layout_width="match_parent"
-        android:layout_height="4dp"
-        android:indeterminate="false"
-        android:visibility="gone" />
+    <com.google.android.material.navigation.NavigationView
+        android:id="@+id/nav_view"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        app:headerLayout="@layout/nav_header"
+        app:menu="@menu/drawer_menu" />
 
-    <!-- Area Utama WebView -->
-    <WebView
-        android:id="@+id/webview_unog"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-
-</LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>
