@@ -3,6 +3,7 @@ package com.rx.unogmobile;
 import android.annotation.SuppressLint;
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -49,10 +50,18 @@ import com.google.android.material.navigation.NavigationView;
 import static androidx.biometric.BiometricManager.Authenticators.BIOMETRIC_STRONG;
 import static androidx.biometric.BiometricManager.Authenticators.DEVICE_CREDENTIAL;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Locale;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private WebView myWebView;
@@ -73,6 +82,9 @@ public class MainActivity extends AppCompatActivity {
 
     private final String BASE_URL = "https://script.google.com/macros/s/AKfycbzG3Ch46IBO-ypHTJ3Md_tWqBibDgVPlPYrNulovwG7TQVQoobaOJyNDtocFCu_sTRQZg/exec";
 
+    // URL Web App dari Google Apps Script untuk sistem update
+    private final String UPDATE_URL_API = "https://script.google.com/macros/s/AKfycbwxPbz8LMHMx6CVFqtcxCmCerwGP7XqnntigZOKNAXGU6CACgptnEnDjdrxAFTh1NV2Rg/exec";
+
     // Variabel Global untuk Kalkulator USG
     private Calendar selectedUsgDate = null;
 
@@ -88,6 +100,9 @@ public class MainActivity extends AppCompatActivity {
         initViews();
         setupWebView();
         setupBackNavigation();
+
+        // Pemicu 1: Cek update senyap di latar belakang saat aplikasi dibuka
+        checkForUpdates(false);
     }
 
     private void hideSystemUI() {
@@ -192,6 +207,9 @@ public class MainActivity extends AppCompatActivity {
                 showCalculatorSelectionMenu();
             } else if (id == R.id.nav_about) {
                 showAboutDialog();
+            } else if (id == R.id.nav_update) {
+                // Pemicu 2: Cek update secara manual melalui Sidebar
+                checkForUpdates(true);
             }
             drawerLayout.closeDrawer(GravityCompat.START);
             return true;
@@ -762,6 +780,95 @@ public class MainActivity extends AppCompatActivity {
                 .setPositiveButton("Ya, Keluar", (dialog, which) -> finish())
                 .setNegativeButton("Batal", null)
                 .show();
+    }
+
+    // =========================================================
+    // FITUR: CEK UPDATE OTOMATIS & MANUAL
+    // =========================================================
+    private void checkForUpdates(boolean isManual) {
+        if (isManual) {
+            Toast.makeText(this, "Mengecek pembaruan sistem...", Toast.LENGTH_SHORT).show();
+        }
+
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Handler handler = new Handler(Looper.getMainLooper());
+
+        executor.execute(() -> {
+            try {
+                URL url = new URL(UPDATE_URL_API);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(5000);
+
+                BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                JSONObject jsonResponse = new JSONObject(response.toString());
+                int latestVersionCode = jsonResponse.getInt("latest_version_code");
+                String latestVersionName = jsonResponse.getString("latest_version_name");
+
+                // Me-replace \n dari string JSON menjadi enter betulan di Java
+                String releaseNotes = jsonResponse.getString("release_notes").replace("\\n", "\n");
+                boolean forceUpdate = jsonResponse.getBoolean("force_update");
+                String updateUrl = jsonResponse.getString("update_url");
+
+                int currentVersionCode = 0;
+                try {
+                    PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                        currentVersionCode = (int) pInfo.getLongVersionCode();
+                    } else {
+                        currentVersionCode = pInfo.versionCode;
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+
+                int finalCurrentVersionCode = currentVersionCode;
+                handler.post(() -> {
+                    if (latestVersionCode > finalCurrentVersionCode) {
+                        showUpdateDialog(latestVersionName, releaseNotes, forceUpdate, updateUrl);
+                    } else if (isManual) {
+                        Toast.makeText(MainActivity.this, "UNOG Mobile sudah dalam versi terbaru.", Toast.LENGTH_LONG).show();
+                    }
+                });
+
+            } catch (Exception e) {
+                handler.post(() -> {
+                    if (isManual) {
+                        Toast.makeText(MainActivity.this, "Gagal terhubung ke server update.", Toast.LENGTH_SHORT).show();
+                    }
+                });
+            }
+        });
+    }
+
+    private void showUpdateDialog(String versionName, String releaseNotes, boolean forceUpdate, String updateUrl) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+                .setTitle("Update Tersedia (" + versionName + ")")
+                .setMessage(releaseNotes)
+                .setCancelable(!forceUpdate);
+
+        builder.setPositiveButton("Update Sekarang", (dialog, which) -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(updateUrl));
+            startActivity(intent);
+            if (forceUpdate) {
+                finish();
+            }
+        });
+
+        if (!forceUpdate) {
+            builder.setNegativeButton("Nanti Saja", (dialog, which) -> dialog.dismiss());
+        }
+
+        AlertDialog dialog = builder.create();
+        dialog.setCanceledOnTouchOutside(!forceUpdate);
+        dialog.show();
     }
 
     @Override
